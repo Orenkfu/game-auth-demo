@@ -5,6 +5,7 @@ import {
   Query,
   Headers,
   Res,
+  HttpCode,
   HttpStatus,
   BadRequestException,
   UnauthorizedException,
@@ -44,7 +45,7 @@ export class OAuthController {
   constructor(
     private readonly oauthService: OAuthService,
     private readonly sessionService: SessionService,
-  ) {}
+  ) { }
 
   // === Discord ===
 
@@ -201,6 +202,7 @@ export class OAuthController {
     return { valid: true, session };
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('logout')
   async logout(
     @Headers('authorization') authHeader: string,
