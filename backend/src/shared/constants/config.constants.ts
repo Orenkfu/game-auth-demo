@@ -14,6 +14,11 @@ export const CONFIG_RIOT_CLIENT_SECRET = 'riot.clientSecret';
 export const CONFIG_RIOT_REDIRECT_URI = 'riot.redirectUri';
 export const CONFIG_RIOT_SCOPES = 'riot.scopes';
 
+// Server Configuration
+export const CONFIG_PORT = 'PORT';
+export const CONFIG_SESSION_TTL = 'SESSION_TTL_SECONDS';
+export const DEFAULT_PORT = 3001;
+
 // Environment Files
 export const ENV_FILE_LOCAL = '.env.local';
 export const ENV_FILE_DEFAULT = '.env';

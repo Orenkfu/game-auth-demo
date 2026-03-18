@@ -5,6 +5,7 @@
 // Success Messages
 export const SUCCESS_ACCOUNT_CREATED = 'Account created successfully';
 export const SUCCESS_LOGIN = 'Login successful';
+export const SUCCESS_LOGGED_OUT = 'Logged out successfully';
 
 // OAuth Error Messages
 export const ERROR_DISCORD_AUTH_FAILED = 'Discord authorization failed';
@@ -16,6 +17,10 @@ export const ERROR_DISCORD_FETCH_RELATIONSHIPS = 'Failed to fetch Discord relati
 export const ERROR_RIOT_CODE_EXCHANGE = 'Failed to exchange Riot authorization code: ';
 export const ERROR_RIOT_REFRESH_TOKENS = 'Failed to refresh Riot tokens: ';
 export const ERROR_RIOT_FETCH_ACCOUNT = 'Failed to fetch Riot account info: ';
+
+// Session Error Messages
+export const ERROR_MISSING_SESSION_TOKEN = 'Missing session token';
+export const ERROR_INVALID_SESSION = 'Invalid or expired session';
 
 // State/Validation Error Messages
 export const ERROR_INVALID_OAUTH_STATE = 'Invalid or expired OAuth state';

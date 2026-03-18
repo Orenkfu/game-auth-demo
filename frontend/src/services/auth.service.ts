@@ -40,6 +40,7 @@ export interface AuthResult {
   profile: AuthProfile;
   discord?: DiscordData;
   riot?: RiotData;
+  statusCode?: number;
 }
 
 export type AuthProvider = 'discord' | 'riot';

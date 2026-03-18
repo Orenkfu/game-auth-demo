@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum IdentityStatus {
+  active
+  suspended
+  deleted
+}
+
+enum OAuthProvider {
+  discord
+  riot
+}
+
+model Identity {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  passwordHash  String?
+  status        IdentityStatus @default(active)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  deletedAt     DateTime?
+
+  oauthAccounts OAuthAccount[]
+  profile       UserProfile?
+
+  @@map("identities")
+}
+
+model OAuthAccount {
+  id                    String        @id @default(uuid())
+  identityId            String
+  provider              OAuthProvider
+  providerUserId        String
+  providerUsername      String?
+  providerEmail         String?
+  accessTokenEncrypted  String
+  refreshTokenEncrypted String?
+  tokenExpiresAt        DateTime?
+  scopes                String[]
+  metadata              Json          @default("{}")
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime
+
+  identity Identity @relation(fields: [identityId], references: [id])
+
+  @@unique([provider, providerUserId])
+  @@map("oauth_accounts")
+}
+
+model UserProfile {
+  id             String   @id @default(uuid())
+  identityId     String   @unique
+  username       String   @unique
+  displayName    String?
+  avatarUrl      String?
+  bio            String?
+  gamerTag       String?
+  preferredGames String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  identity Identity @relation(fields: [identityId], references: [id])
+
+  @@map("user_profiles")
+}

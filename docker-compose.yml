@@ -9,6 +9,22 @@ services:
       timeout: 3s
       retries: 5
 
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: gameauth
+      POSTGRES_PASSWORD: gameauth
+      POSTGRES_DB: gameauth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gameauth"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
@@ -19,6 +35,13 @@ services:
     environment:
       USE_REDIS: "true"
       REDIS_URL: redis://redis:6379
+      USE_POSTGRES: "true"
+      DATABASE_URL: postgresql://gameauth:gameauth@postgres:5432/gameauth
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

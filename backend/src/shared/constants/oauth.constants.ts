@@ -7,6 +7,8 @@ export const DISCORD_OAUTH_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize
 export const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 export const DISCORD_API_BASE_URL = 'https://discord.com/api/v10';
 export const DISCORD_USER_ME_ENDPOINT = '/users/@me';
+export const DISCORD_REVOKE_ENDPOINT = '/revoke';
+export const DISCORD_RELATIONSHIPS_ENDPOINT = '/users/@me/relationships';
 
 // Discord Placeholder Email
 export const DISCORD_PLACEHOLDER_EMAIL_DOMAIN = '@discord.placeholder';

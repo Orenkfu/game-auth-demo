@@ -3,6 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import type { CacheStore } from '../../../shared/interfaces/cache-store.interface';
 import { SESSION_STORE } from '../../../shared/interfaces/cache-store.interface';
+import {
+  SESSION_KEY_PREFIX,
+  SESSION_TTL_DEFAULT,
+} from '../../../shared/constants/storage.constants';
+import { CONFIG_SESSION_TTL } from '../../../shared/constants/config.constants';
 
 export interface Session {
   id: string;
@@ -22,13 +27,13 @@ export interface CreateSessionDto {
 @Injectable()
 export class SessionService {
   private readonly ttlSeconds: number;
-  private readonly keyPrefix = 'session:';
+  private readonly keyPrefix = SESSION_KEY_PREFIX;
 
   constructor(
     @Inject(SESSION_STORE) private readonly store: CacheStore,
     private readonly config: ConfigService,
   ) {
-    this.ttlSeconds = this.config.get<number>('SESSION_TTL_SECONDS', 86400); // 24h default
+    this.ttlSeconds = this.config.get<number>(CONFIG_SESSION_TTL, SESSION_TTL_DEFAULT);
   }
 
   async create(dto: CreateSessionDto): Promise<Session> {

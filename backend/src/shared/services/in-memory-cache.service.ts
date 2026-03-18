@@ -14,7 +14,6 @@ export class InMemoryCache implements CacheStore, OnModuleDestroy {
   constructor() {
     this.cleanupInterval = setInterval(() => this.cleanup(), 60_000);
     this.cleanupInterval.unref(); // Don't keep process alive for this
-    console.log('[InMemoryCache] Initialized');
   }
 
   onModuleDestroy() {

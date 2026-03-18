@@ -13,6 +13,10 @@ export default function App() {
 
     try {
       const result = await window.electronAPI.loginWithProvider(provider);
+      if (result && result.statusCode) {
+        setError(result.message || 'Login failed');
+        return;
+      }
       authService.setSessionToken(result.sessionToken);
       setUser(result);
     } catch (err) {

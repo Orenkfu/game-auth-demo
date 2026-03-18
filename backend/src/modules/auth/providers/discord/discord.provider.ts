@@ -10,6 +10,8 @@ import {
   DISCORD_TOKEN_URL,
   DISCORD_API_BASE_URL,
   DISCORD_USER_ME_ENDPOINT,
+  DISCORD_REVOKE_ENDPOINT,
+  DISCORD_RELATIONSHIPS_ENDPOINT,
   CONFIG_DISCORD_CLIENT_ID,
   CONFIG_DISCORD_CLIENT_SECRET,
   CONFIG_DISCORD_REDIRECT_URI,
@@ -134,7 +136,7 @@ export class DiscordProvider {
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    await fetch(`${this.tokenUrl}/revoke`, {
+    await fetch(`${this.tokenUrl}${DISCORD_REVOKE_ENDPOINT}`, {
       method: 'POST',
       headers: {
         [HTTP_HEADER_CONTENT_TYPE]: CONTENT_TYPE_FORM_URLENCODED,
@@ -148,7 +150,7 @@ export class DiscordProvider {
   }
 
   async getRelationships(accessToken: string): Promise<DiscordRelationship[]> {
-    const response = await fetch(`${this.apiBase}/users/@me/relationships`, {
+    const response = await fetch(`${this.apiBase}${DISCORD_RELATIONSHIPS_ENDPOINT}`, {
       headers: {
         [HTTP_HEADER_AUTHORIZATION]: `${AUTH_SCHEME_BEARER} ${accessToken}`,
       },

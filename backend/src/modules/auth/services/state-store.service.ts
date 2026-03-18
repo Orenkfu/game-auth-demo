@@ -3,6 +3,7 @@ import type { CacheStore } from '../../../shared/interfaces/cache-store.interfac
 import { SESSION_STORE } from '../../../shared/interfaces/cache-store.interface';
 import {
   STATE_TTL_SECONDS,
+  STATE_KEY_PREFIX,
   ERROR_INVALID_OAUTH_STATE,
 } from '../../../shared/constants';
 
@@ -11,8 +12,6 @@ export interface OAuthStateData {
   linkToIdentityId?: string;
   codeVerifier?: string; // For PKCE (Riot)
 }
-
-const STATE_KEY_PREFIX = 'oauth_state:';
 
 @Injectable()
 export class StateStoreService {

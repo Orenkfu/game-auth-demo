@@ -7,7 +7,7 @@ import { CacheStore } from '../interfaces/cache-store.interface';
 export class RedisCache implements CacheStore, OnModuleDestroy {
   private client: Redis;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   init(): void {
     const redisUrl = this.configService.get<string>(
@@ -17,7 +17,7 @@ export class RedisCache implements CacheStore, OnModuleDestroy {
     this.client = new Redis(redisUrl);
 
     this.client.on('error', (err) => {
-      console.error('[RedisCache] Connection error:', err.message);
+      console.error('[RedisCache] Connection error:', JSON.stringify(err));
     });
 
     this.client.on('connect', () => {

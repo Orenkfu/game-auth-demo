@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InMemoryStore } from './services/in-memory-store.service';
 import { InMemoryCache } from './services/in-memory-cache.service';
 import { RedisCache } from './services/redis-cache.service';
+import { PrismaService } from './services/prisma.service';
+import { SessionGuard } from './guards/session.guard';
 import { SESSION_STORE } from './interfaces/cache-store.interface';
 
 @Global()
@@ -26,7 +28,9 @@ import { SESSION_STORE } from './interfaces/cache-store.interface';
       inject: [ConfigService, InMemoryCache, RedisCache],
     },
     RedisCache,
+    PrismaService,
+    SessionGuard,
   ],
-  exports: [InMemoryStore, SESSION_STORE],
+  exports: [InMemoryStore, PrismaService, SESSION_STORE, SessionGuard],
 })
 export class SharedModule {}

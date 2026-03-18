@@ -9,12 +9,17 @@ import {
   HttpStatus,
   BadRequestException,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { IsOptional, IsString } from 'class-validator';
 import express from 'express';
 import { OAuthService } from '../services/oauth.service';
 import { SessionService } from '../services/session.service';
+import type { Session } from '../services/session.service';
 import { DiscordUser } from '../providers/discord/discord.types';
 import { RiotAccount } from '../providers/riot/riot.types';
+import { SessionGuard } from '../../../shared/guards/session.guard';
+import { CurrentSession } from '../../../shared/decorators/current-session.decorator';
 import {
   OAUTH_CONTROLLER_ROUTE,
   OAUTH_DISCORD_ROUTE,
@@ -23,20 +28,33 @@ import {
   OAUTH_RIOT_ROUTE,
   OAUTH_RIOT_CALLBACK_ROUTE,
   OAUTH_RIOT_LINK_ROUTE,
-  CURRENT_IDENTITY_ID_PARAM,
+  OAUTH_SESSION_ROUTE,
+  OAUTH_LOGOUT_ROUTE,
   ERROR_DISCORD_AUTH_FAILED,
   ERROR_RIOT_AUTH_FAILED,
+  ERROR_MISSING_SESSION_TOKEN,
+  ERROR_INVALID_SESSION,
   SUCCESS_ACCOUNT_CREATED,
   SUCCESS_LOGIN,
+  SUCCESS_LOGGED_OUT,
   DISCORD_AVATAR_CDN_URL,
   PROVIDER_DISCORD,
   PROVIDER_RIOT,
 } from '../../../shared/constants';
 
-class OAuthCallbackQuery {
+export class OAuthCallbackQuery {
+  @IsString()
   code: string;
+
+  @IsString()
   state: string;
+
+  @IsOptional()
+  @IsString()
   error?: string;
+
+  @IsOptional()
+  @IsString()
   error_description?: string;
 }
 
@@ -108,12 +126,14 @@ export class OAuthController {
     });
   }
 
+  @UseGuards(SessionGuard)
   @Get(OAUTH_DISCORD_LINK_ROUTE)
-  async discordLink(@Res() res: express.Response): Promise<void> {
-    // TODO: Get identityId from session
-    const identityId = CURRENT_IDENTITY_ID_PARAM;
+  async discordLink(
+    @CurrentSession() session: Session,
+    @Res() res: express.Response,
+  ): Promise<void> {
     const authUrl = await this.oauthService.getDiscordAuthUrl({
-      linkToIdentityId: identityId,
+      linkToIdentityId: session.identityId,
     });
     res.redirect(HttpStatus.FOUND, authUrl);
   }
@@ -173,37 +193,39 @@ export class OAuthController {
     });
   }
 
+  @UseGuards(SessionGuard)
   @Get(OAUTH_RIOT_LINK_ROUTE)
-  async riotLink(@Res() res: express.Response): Promise<void> {
-    // TODO: Get identityId from session
-    const identityId = CURRENT_IDENTITY_ID_PARAM;
+  async riotLink(
+    @CurrentSession() session: Session,
+    @Res() res: express.Response,
+  ): Promise<void> {
     const authUrl = await this.oauthService.getRiotAuthUrl({
-      linkToIdentityId: identityId,
+      linkToIdentityId: session.identityId,
     });
     res.redirect(HttpStatus.FOUND, authUrl);
   }
 
   // === Session Management ===
 
-  @Get('session')
+  @Get(OAUTH_SESSION_ROUTE)
   async validateSession(
     @Headers('authorization') authHeader: string,
   ): Promise<{ valid: boolean; session?: object }> {
     const token = this.extractToken(authHeader);
     if (!token) {
-      throw new UnauthorizedException('Missing session token');
+      throw new UnauthorizedException(ERROR_MISSING_SESSION_TOKEN);
     }
 
     const session = await this.sessionService.validate(token);
     if (!session) {
-      throw new UnauthorizedException('Invalid or expired session');
+      throw new UnauthorizedException(ERROR_INVALID_SESSION);
     }
 
     return { valid: true, session };
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('logout')
+  @Post(OAUTH_LOGOUT_ROUTE)
   async logout(
     @Headers('authorization') authHeader: string,
   ): Promise<{ message: string }> {
@@ -211,7 +233,7 @@ export class OAuthController {
     if (token) {
       await this.sessionService.revoke(token);
     }
-    return { message: 'Logged out successfully' };
+    return { message: SUCCESS_LOGGED_OUT };
   }
 
   private extractToken(authHeader: string | undefined): string | null {

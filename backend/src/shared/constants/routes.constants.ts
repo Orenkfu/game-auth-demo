@@ -10,6 +10,8 @@ export const OAUTH_DISCORD_LINK_ROUTE = 'discord/link';
 export const OAUTH_RIOT_ROUTE = 'riot';
 export const OAUTH_RIOT_CALLBACK_ROUTE = 'riot/callback';
 export const OAUTH_RIOT_LINK_ROUTE = 'riot/link';
+export const OAUTH_SESSION_ROUTE = 'session';
+export const OAUTH_LOGOUT_ROUTE = 'logout';
 
 // Users Controller Routes
 export const USERS_CONTROLLER_ROUTE = 'users';

@@ -1,132 +1,156 @@
 # Game Auth Backend
 
-NestJS-based authentication API for gaming OAuth providers.
+NestJS authentication API with Discord/Riot OAuth, Redis sessions, and Postgres persistence.
 
 ## Architecture
 
 ```
 src/
-├── app.module.ts           # Root module
-├── main.ts                 # Bootstrap
-├── config/                 # Configuration schema
+├── main.ts                # Bootstrap — global ValidationPipe, port
+├── app.module.ts          # Root module — LoggingMiddleware
+├── config/                # discord.config.ts, riot.config.ts
 ├── modules/
-│   ├── auth/               # Authentication module
-│   │   ├── controllers/    # OAuth endpoints
-│   │   ├── services/       # Business logic
-│   │   ├── providers/      # OAuth provider integrations
-│   │   │   ├── discord/    # Discord OAuth implementation
-│   │   │   └── riot/       # Riot OAuth implementation (pending)
-│   │   ├── entities/       # Identity, OAuthAccount
-│   │   ├── repositories/   # Data access layer
-│   │   └── exceptions/     # Custom exceptions
-│   ├── users/              # User profile module
-│   │   ├── dto/            # Validation DTOs
-│   │   ├── services/       # Profile management
-│   │   ├── repositories/   # Profile data access
-│   │   └── entities/       # UserProfile entity
-│   └── social/             # Social features (planned)
+│   ├── auth/              # Authentication module
+│   │   ├── controllers/   # oauth.controller.ts
+│   │   ├── services/      # identity, oauth, oauth-account, session, state-store
+│   │   ├── providers/     # discord/, riot/ (PKCE)
+│   │   ├── repositories/  # in-memory + Prisma implementations
+│   │   ├── entities/      # Identity, OAuthAccount
+│   │   └── exceptions/    # LinkRequiredException
+│   └── users/             # User profile module
+│       ├── dto/           # class-validator DTOs
+│       ├── services/      # user-profile.service.ts
+│       ├── repositories/  # in-memory + Prisma implementations
+│       └── entities/      # UserProfile
 └── shared/
-    ├── services/           # In-memory cache, Redis wrapper
-    ├── interfaces/         # Shared contracts
-    └── constants/          # Injection tokens
+    ├── constants/         # All magic strings and numbers
+    ├── decorators/        # @CurrentSession()
+    ├── guards/            # SessionGuard
+    ├── middleware/        # LoggingMiddleware
+    ├── interfaces/        # CacheStore
+    └── services/          # InMemoryCache, InMemoryStore, RedisCache, PrismaService
 ```
 
 ## Modules
 
 ### Auth Module
 
-Handles OAuth authentication and session management.
-
 **Services:**
-- `IdentityService` - Creates/finds auth identities
-- `OAuthAccountService` - Manages linked OAuth accounts
-- `OAuthService` - Orchestrates OAuth flow (exchange code, link accounts)
-- `SessionService` - Creates/validates/revokes sessions
-- `StateStoreService` - Manages OAuth state parameters
+- `IdentityService` — creates/finds auth identities
+- `OAuthService` — orchestrates the 3-rule OAuth flow
+- `OAuthAccountService` — manages linked OAuth accounts
+- `SessionService` — creates/validates/revokes sessions with sliding TTL
+- `StateStoreService` — OAuth state parameter with TTL (CSRF protection)
 
 **Providers:**
-- `DiscordProvider` - Discord OAuth 2.0 implementation
-- `RiotProvider` - Riot Sign-On with PKCE (pending credentials)
+- `DiscordProvider` — Discord OAuth 2.0 (authorize URL, code exchange, user info)
+- `RiotProvider` — Riot Sign-On with PKCE (code complete, awaiting RSO credentials)
 
 **Endpoints:**
 ```
-GET  /oauth/discord           # Start Discord OAuth
+GET  /oauth/discord           # Initiate Discord OAuth
 GET  /oauth/discord/callback  # Handle Discord callback
-GET  /oauth/riot              # Start Riot OAuth
+GET  /oauth/discord/link      # Link Discord to existing session [SessionGuard]
+GET  /oauth/riot              # Initiate Riot OAuth
 GET  /oauth/riot/callback     # Handle Riot callback
-GET  /oauth/session           # Validate current session
+GET  /oauth/riot/link         # Link Riot to existing session [SessionGuard]
+GET  /oauth/session           # Validate current session token
 POST /oauth/logout            # Revoke session
 ```
 
 ### Users Module
 
-Manages user profiles (application data separate from auth).
-
 **Services:**
-- `UserProfileService` - CRUD operations, username generation
-- `UsersService` - Aggregated user operations
+- `UserProfileService` — CRUD, unique username generation
 
 **Entities:**
-- `UserProfile` - Display name, avatar, bio, gamer preferences
+- `UserProfile` — username, displayName, avatarUrl, bio, gamerTag, preferredGames
+
+### Shared Module
+
+**Guards:**
+- `SessionGuard` — validates `Authorization: Bearer <token>`, refreshes sliding TTL
+
+**Decorators:**
+- `@CurrentSession()` — injects the `Session` object from `req.session` (set by `SessionGuard`)
+
+**Middleware:**
+- `LoggingMiddleware` — logs `METHOD /path STATUS Xms` for every request
+
+**Storage:**
+
+| Env | SESSION_STORE | Repositories |
+|-----|---------------|--------------|
+| `USE_REDIS=false` | InMemoryCacheService | InMemory*Repository |
+| `USE_REDIS=true` | RedisCache | — |
+| `USE_POSTGRES=false` | — | InMemory*Repository |
+| `USE_POSTGRES=true` | — | Prisma*Repository |
 
 ## Quick Reference
 
 ```bash
-# Development
-npm run start:dev          # Watch mode with hot reload
-npm run start:debug        # Debug mode with inspector
+# Development (in-memory — no Docker required)
+npm run start:dev
+
+# Build
+npm run build              # prisma generate + nest build
+
+# Database (requires Postgres running)
+npm run db:migrate         # Apply Prisma migrations
+npm run db:studio          # Open Prisma Studio UI
 
 # Testing
-npm test                   # Run all tests with coverage
+npm test                   # Unit tests with coverage
 npm run test:watch         # Watch mode
-npm run test:e2e           # End-to-end tests
+npm run test:e2e           # E2E tests (requires Redis on localhost:6379)
+npm run test:e2e:docker    # Auto-starts Redis via Docker, then runs E2E
 
-# Code Quality
-npm run lint               # ESLint with autofix
-npm run format             # Prettier formatting
+# Code quality
+npm run lint
+npm run format
 ```
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | Server port | 3001 |
-| `DISCORD_CLIENT_ID` | Discord app client ID | - |
-| `DISCORD_CLIENT_SECRET` | Discord app secret | - |
-| `DISCORD_REDIRECT_URI` | OAuth callback URL | - |
-| `RIOT_CLIENT_ID` | Riot RSO client ID | - |
-| `RIOT_CLIENT_SECRET` | Riot RSO secret | - |
-| `RIOT_REDIRECT_URI` | RSO callback URL | - |
-| `SESSION_TTL_SECONDS` | Session TTL | 86400 |
+| `PORT` | Server port | `3001` |
+| `USE_REDIS` | Use Redis for sessions | `false` |
+| `REDIS_URL` | Redis connection URL | `redis://localhost:6379` |
+| `USE_POSTGRES` | Use Postgres for persistence | `false` |
+| `DATABASE_URL` | Postgres connection URL | — |
+| `DISCORD_CLIENT_ID` | Discord app client ID | required |
+| `DISCORD_CLIENT_SECRET` | Discord app secret | required |
+| `DISCORD_REDIRECT_URI` | Discord OAuth callback URL | required |
+| `RIOT_CLIENT_ID` | Riot RSO client ID | required if Riot enabled |
+| `RIOT_CLIENT_SECRET` | Riot RSO secret | required if Riot enabled |
+| `RIOT_REDIRECT_URI` | Riot OAuth callback URL | required if Riot enabled |
+| `SESSION_TTL_SECONDS` | Session sliding window TTL | `86400` (24h) |
 
 ## Testing
 
-Test coverage is enforced at 10% minimum (ramping up).
+Tests are co-located with source files (`*.spec.ts`) and E2E tests live in `test/`.
 
 ```bash
-# Run with coverage report
-npm test
-
-# Output formats: text, lcov, html
-# Reports at: coverage/
+npm test   # runs Jest with coverage
 ```
 
-### Test Files
+**Unit test coverage** includes all services, repositories (in-memory + Prisma), providers (Discord + Riot), guards, decorators, middleware, DTOs, and the OAuth controller.
 
-```
-*.spec.ts                    # Unit tests alongside source
-test/*.e2e-spec.ts          # E2E tests in test directory
-```
+**E2E tests** (`test/auth-flow.e2e-spec.ts`) cover:
+- Rule 1: Returning user login
+- Rule 2: New user signup
+- Rule 3: Email collision + explicit link
+- Redis session storage (login → verify in Redis, logout → verify removed)
 
 ## Dependencies
 
 ### Runtime
 - `@nestjs/common`, `@nestjs/core`, `@nestjs/config`
-- `class-validator`, `class-transformer` - DTO validation
-- `ioredis` - Redis client (session store)
-- `zod` - Runtime validation
+- `class-validator`, `class-transformer` — DTO validation
+- `ioredis` — Redis client
+- `prisma`, `@prisma/client` — ORM
 
 ### Development
-- `jest`, `@nestjs/testing` - Testing framework
-- `supertest` - HTTP assertions
-- `typescript-eslint`, `prettier` - Code quality
+- `jest`, `@nestjs/testing`, `supertest` — testing
+- `typescript-eslint`, `prettier` — code quality
