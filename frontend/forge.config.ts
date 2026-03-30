@@ -25,6 +25,7 @@ const config: ForgeConfig = {
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
+      devContentSecurityPolicy: "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:3001 http://localhost:3002; img-src 'self' https://cdn.discordapp.com;",
       mainConfig,
       renderer: {
         config: rendererConfig,

@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { authService } from './services/auth.service';
+import { useState, useRef } from 'react';
+import { authService, eventQueue } from './bootstrap';
 import type { AuthResult, AuthProvider } from './services/auth.service';
+import { EventMockPipe } from './event-generation/event.mock-pipe';
 
 export default function App() {
   const [user, setUser] = useState<AuthResult | null>(null);
   const [loading, setLoading] = useState<AuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mockRunning, setMockRunning] = useState(false);
+  const mockPipeRef = useRef<EventMockPipe | null>(null);
 
   const handleLogin = async (provider: AuthProvider) => {
     setLoading(provider);
@@ -17,7 +20,7 @@ export default function App() {
         setError(result.message || 'Login failed');
         return;
       }
-      authService.setSessionToken(result.sessionToken);
+      authService.setSession(result.sessionToken, result.profile);
       setUser(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -48,7 +51,7 @@ export default function App() {
           )}
           <div className="user-info">
             <p><strong>Session:</strong> {user.sessionToken.substring(0, 8)}...</p>
-            <p><strong>Identity ID:</strong> {user.identity.id}</p>
+            <p><strong>Profile ID:</strong> {user.profile.id}</p>
             <p><strong>Email:</strong> {user.identity.email}</p>
             <p><strong>Verified:</strong> {user.identity.emailVerified ? 'Yes' : 'No'}</p>
             {user.discord && (
@@ -58,6 +61,32 @@ export default function App() {
               <p><strong>Riot ID:</strong> {user.riot.riotId}</p>
             )}
           </div>
+        </div>
+
+        <div className="mock-controls">
+          <h3>Event Mock Pipe</h3>
+          <button
+            onClick={() => {
+              if (!mockPipeRef.current) {
+                mockPipeRef.current = new EventMockPipe(eventQueue, 'mock-game-1');
+              }
+              mockPipeRef.current.start();
+              setMockRunning(true);
+            }}
+            disabled={mockRunning}
+          >
+            Start
+          </button>
+          <button
+            onClick={() => {
+              mockPipeRef.current?.stop();
+              setMockRunning(false);
+            }}
+            disabled={!mockRunning}
+          >
+            Stop
+          </button>
+          <span>{mockRunning ? 'Streaming...' : 'Idle'}</span>
         </div>
 
         <button onClick={handleLogout} className="logout-btn">

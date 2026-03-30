@@ -43,5 +43,16 @@ services:
       postgres:
         condition: service_healthy
 
+  ingestor:
+    build:
+      context: ./ingestor
+    ports:
+      - "3002:3002"
+    environment:
+      REDIS_ADDR: redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:

@@ -45,23 +45,30 @@ export interface AuthResult {
 
 export type AuthProvider = 'discord' | 'riot';
 
-class AuthService {
+export class AuthService {
   private sessionToken: string | null = null;
+  private userProfile: AuthProfile | null = null;
 
   getOAuthUrl(provider: AuthProvider): string {
     return `${BACKEND_URL}/oauth/${provider}`;
   }
 
-  setSessionToken(token: string): void {
+  setSession(token: string, profile: AuthProfile): void {
     this.sessionToken = token;
+    this.userProfile = profile;
   }
 
   getSessionToken(): string | null {
     return this.sessionToken;
   }
 
-  clearSessionToken(): void {
+  getProfileId(): string | null {
+    return this.userProfile?.id ?? null;
+  }
+
+  clearSession(): void {
     this.sessionToken = null;
+    this.userProfile = null;
   }
 
   async validateSession(): Promise<boolean> {
@@ -92,8 +99,6 @@ class AuthService {
         // Ignore errors on logout
       }
     }
-    this.clearSessionToken();
+    this.clearSession();
   }
 }
-
-export const authService = new AuthService();
