@@ -7,8 +7,10 @@ export const PlatformEventType = {
 export type PlatformEventType = (typeof PlatformEventType)[keyof typeof PlatformEventType];
 
 export const GameEventType = {
-    GAME_STARTED: 'game_started',
-    GAME_COMPLETED: 'game_completed',
+    GAME_OPENED: 'game_opened',
+    GAME_CLOSED: 'game_closed',
+    MATCH_STARTED: 'match_started',
+    MATCH_ENDED: 'match_ended',
     ACTION: 'action',
 } as const;
 
@@ -19,6 +21,7 @@ export type EventCategory = 'game' | 'platform';
 export interface BaseEvent {
     id: string;
     deviceId: string;
+    sessionId?: string;
     userId?: string;
     eventCategory: EventCategory;
     timestamp: number;

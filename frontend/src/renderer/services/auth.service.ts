@@ -76,9 +76,7 @@ export class AuthService {
 
     try {
       const response = await fetch(`${config.backendUrl}/oauth/session`, {
-        headers: {
-          Authorization: `Bearer ${this.sessionToken}`,
-        },
+        headers: { Authorization: `Bearer ${this.sessionToken}` },
       });
       return response.ok;
     } catch {
@@ -91,9 +89,7 @@ export class AuthService {
       try {
         await fetch(`${config.backendUrl}/oauth/logout`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.sessionToken}`,
-          },
+          headers: { Authorization: `Bearer ${this.sessionToken}` },
         });
       } catch {
         // Ignore errors on logout

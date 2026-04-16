@@ -54,5 +54,20 @@ services:
       redis:
         condition: service_healthy
 
+  consumer:
+    build:
+      context: ./consumer
+    ports:
+      - "3003:3003"
+    environment:
+      REDIS_ADDR: redis:6379
+      DUCKDB_PATH: /data/events.duckdb
+    volumes:
+      - duckdb_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  duckdb_data:

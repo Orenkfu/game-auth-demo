@@ -1,19 +1,17 @@
 import { EventUnion } from "../event-generation/event.types";
-
-const BACKEND_URL = 'http://localhost:3002';
-
+import { config } from "../config";
 
 export class EventService {
 
-    async sendEvent(payload: EventUnion[]): Promise<void> {
-        const response = await fetch(`${BACKEND_URL}/ingest`, {
+    async sendEvents(payload: EventUnion[]): Promise<void> {
+        const response = await fetch(`${config.ingestorUrl}/ingest`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ events: payload })
         });
-        if (!response.ok) { throw new Error('Failed to send event'); }
+        if (!response.ok) { throw new Error('Failed to send events'); }
     }
 
 }

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go get:*)",
+      "Bash(go build:*)",
+      "WebFetch(domain:dev.overwolf.com)",
+      "WebSearch",
+      "WebFetch(domain:support.overwolf.com)",
+      "WebFetch(domain:en.wikipedia.org)"
+    ]
+  }
+}

@@ -15,6 +15,7 @@ const createWindow = (): void => {
   mainWindow = new BrowserWindow({
     height: 700,
     width: 900,
+    frame: false,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -105,7 +106,9 @@ ipcMain.handle('oauth:login', async (_event, provider: string) => {
 });
 
 app.on('ready', createWindow);
-
+ipcMain.on('window:minimize', () => mainWindow?.minimize());
+ipcMain.on('window:maximize', () => mainWindow?.isMaximized() ? mainWindow?.unmaximize() : mainWindow?.maximize());
+ipcMain.on('window:close', () => mainWindow?.close());
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();

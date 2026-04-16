@@ -1,6 +1,6 @@
 import { EventUnion, GameEvent, GameEventType, PlatformEvent, PlatformEventType } from "./event.types";
-import { DeviceService } from "../services/device.service";
-import { AuthService } from "../services/auth.service";
+import { DeviceService } from "../renderer/services/device.service";
+import { AuthService } from "../renderer/services/auth.service";
 import { v4 } from "uuid";
 
 export class EventQueue {
@@ -9,7 +9,7 @@ export class EventQueue {
     private deviceService: DeviceService;
     private authService: AuthService;
 
-    constructor(deviceService: DeviceService, authService: AuthService, maxSize = 100) {
+    constructor(deviceService: DeviceService, authService: AuthService, maxSize = 10000) {
         this.maxSize = maxSize;
         this.queue = [];
         this.deviceService = deviceService;

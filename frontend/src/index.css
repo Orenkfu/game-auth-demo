@@ -130,3 +130,288 @@ button:disabled {
 .user-info strong {
   color: #fff;
 }
+
+.pipes-section {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 2rem;
+}
+
+.pipes-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.add-pipe {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.add-pipe select {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a3e;
+  color: #eee;
+  font-size: 0.9rem;
+}
+
+.add-btn {
+  background: #10b981;
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.add-btn:hover {
+  background: #059669;
+}
+
+.pipes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pipe-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 3px solid #444;
+}
+
+.pipe-card.pipe-idle {
+  border-left-color: #f59e0b;
+}
+
+.pipe-card.pipe-streaming {
+  border-left-color: #10b981;
+}
+
+.pipe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.status-idle {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.status-streaming {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.pipe-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pipe-controls button {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  background: #5865F2;
+  color: white;
+}
+
+.pipe-controls button:hover {
+  background: #4752c4;
+}
+
+.close-btn {
+  background: #4b5563 !important;
+}
+
+.close-btn:hover {
+  background: #374151 !important;
+}
+
+.pipe-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.pipe-controls input[type="number"] {
+  width: 50px;
+  padding: 0.3rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #2a2a3e;
+  color: #eee;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.query-panel {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 2rem;
+}
+
+.query-panel h2 {
+  font-size: 1.3rem;
+  text-align: center;
+  margin: 0 0 1rem 0;
+}
+
+.preset-queries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.preset-btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ccc;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.preset-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.sql-input {
+  width: 100%;
+  background: #0d1117;
+  color: #e6edf3;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.run-btn {
+  margin-top: 0.75rem;
+  background: #7c3aed;
+  color: white;
+  width: 100%;
+  padding: 0.6rem;
+}
+
+.run-btn:hover:not(:disabled) {
+  background: #6d28d9;
+}
+
+.query-error {
+  margin-top: 0.75rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: monospace;
+}
+
+.results-wrapper {
+  margin-top: 1rem;
+}
+
+.results-count {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-results {
+  color: #666;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #2a2a3e;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.results-table th {
+  background: #1e1e2e;
+  color: #888;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.results-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #1a1a2e;
+  color: #ccc;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.results-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.null-val {
+  color: #555;
+  font-style: italic;
+}
+
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  -webkit-app-region: drag;
+  z-index: 1000;
+}
+
+.titlebar button {
+  -webkit-app-region: no-drag;
+  background: transparent;
+  color: #888;
+  border: none;
+  cursor: pointer;
+  padding: 0 12px;
+  height: 100%;
+  font-size: 1rem;
+}
+
+.titlebar button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}

@@ -25,17 +25,17 @@ const config: ForgeConfig = {
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
-      devContentSecurityPolicy: "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:3001 http://localhost:3002; img-src 'self' https://cdn.discordapp.com;",
+      devContentSecurityPolicy: "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:3001 http://localhost:3002 http://localhost:3003; img-src 'self' https://cdn.discordapp.com;",
       mainConfig,
       renderer: {
         config: rendererConfig,
         entryPoints: [
           {
             html: './src/index.html',
-            js: './src/renderer.tsx',
+            js: './src/renderer/renderer.tsx',
             name: 'main_window',
             preload: {
-              js: './src/preload.ts',
+              js: './src/preload/index.ts',
             },
           },
         ],
