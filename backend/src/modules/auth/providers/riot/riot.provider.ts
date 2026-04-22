@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RiotAccount, RiotTokenResponse } from './riot.types';
 import * as crypto from 'crypto';
@@ -40,6 +40,7 @@ interface PKCEChallenge {
 
 @Injectable()
 export class RiotProvider {
+  private readonly logger = new Logger(RiotProvider.name);
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly redirectUri: string;
@@ -109,10 +110,8 @@ export class RiotProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_RIOT_CODE_EXCHANGE}${error}`,
-      );
+      this.logger.warn(`${ERROR_RIOT_CODE_EXCHANGE}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_RIOT_CODE_EXCHANGE);
     }
 
     return response.json() as Promise<RiotTokenResponse>;
@@ -136,10 +135,8 @@ export class RiotProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_RIOT_REFRESH_TOKENS}${error}`,
-      );
+      this.logger.warn(`${ERROR_RIOT_REFRESH_TOKENS}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_RIOT_REFRESH_TOKENS);
     }
 
     return response.json() as Promise<RiotTokenResponse>;
@@ -156,10 +153,8 @@ export class RiotProvider {
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_RIOT_FETCH_ACCOUNT}${error}`,
-      );
+      this.logger.warn(`${ERROR_RIOT_FETCH_ACCOUNT}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_RIOT_FETCH_ACCOUNT);
     }
 
     return response.json() as Promise<RiotAccount>;

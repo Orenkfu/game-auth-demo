@@ -10,7 +10,9 @@ import {
   BadRequestException,
   UnauthorizedException,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { IsOptional, IsString } from 'class-validator';
 import express from 'express';
 import { OAuthService } from '../services/oauth.service';
@@ -44,10 +46,10 @@ import {
 
 export class OAuthCallbackQuery {
   @IsString()
-  code: string;
+  code!: string;
 
   @IsString()
-  state: string;
+  state!: string;
 
   @IsOptional()
   @IsString()
@@ -60,6 +62,8 @@ export class OAuthCallbackQuery {
 
 @Controller(OAUTH_CONTROLLER_ROUTE)
 export class OAuthController {
+  private readonly logger = new Logger(OAuthController.name);
+
   constructor(
     private readonly oauthService: OAuthService,
     private readonly sessionService: SessionService,
@@ -73,15 +77,16 @@ export class OAuthController {
     res.redirect(HttpStatus.FOUND, authUrl);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @UseGuards(ThrottlerGuard)
   @Get(OAUTH_DISCORD_CALLBACK_ROUTE)
   async discordCallback(
     @Query() query: OAuthCallbackQuery,
     @Res() res: express.Response,
   ): Promise<void> {
     if (query.error) {
-      throw new BadRequestException(
-        query.error_description ?? ERROR_DISCORD_AUTH_FAILED,
-      );
+      this.logger.warn(`Discord OAuth error: ${query.error_description ?? query.error}`);
+      throw new BadRequestException(ERROR_DISCORD_AUTH_FAILED);
     }
 
     const { identity, profile, providerData, isNewUser } =
@@ -126,7 +131,8 @@ export class OAuthController {
     });
   }
 
-  @UseGuards(SessionGuard)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @UseGuards(ThrottlerGuard, SessionGuard)
   @Get(OAUTH_DISCORD_LINK_ROUTE)
   async discordLink(
     @CurrentSession() session: Session,
@@ -146,15 +152,16 @@ export class OAuthController {
     res.redirect(HttpStatus.FOUND, authUrl);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @UseGuards(ThrottlerGuard)
   @Get(OAUTH_RIOT_CALLBACK_ROUTE)
   async riotCallback(
     @Query() query: OAuthCallbackQuery,
     @Res() res: express.Response,
   ): Promise<void> {
     if (query.error) {
-      throw new BadRequestException(
-        query.error_description ?? ERROR_RIOT_AUTH_FAILED,
-      );
+      this.logger.warn(`Riot OAuth error: ${query.error_description ?? query.error}`);
+      throw new BadRequestException(ERROR_RIOT_AUTH_FAILED);
     }
 
     const { identity, profile, providerData, isNewUser } =
@@ -193,7 +200,8 @@ export class OAuthController {
     });
   }
 
-  @UseGuards(SessionGuard)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @UseGuards(ThrottlerGuard, SessionGuard)
   @Get(OAUTH_RIOT_LINK_ROUTE)
   async riotLink(
     @CurrentSession() session: Session,
@@ -207,6 +215,8 @@ export class OAuthController {
 
   // === Session Management ===
 
+  @Throttle({ default: { ttl: 60_000, limit: 30 } })
+  @UseGuards(ThrottlerGuard)
   @Get(OAUTH_SESSION_ROUTE)
   async validateSession(
     @Headers('authorization') authHeader: string,
@@ -224,6 +234,8 @@ export class OAuthController {
     return { valid: true, session };
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   @Post(OAUTH_LOGOUT_ROUTE)
   async logout(
