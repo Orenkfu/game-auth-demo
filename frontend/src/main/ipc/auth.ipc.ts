@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { IPC_CHANNELS } from './ipc-channels';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3001';
+const BACKEND_URL = `${process.env.BACKEND_URL ?? 'http://localhost:3001'}/api/v1`;
 
 export function registerAuthHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle(IPC_CHANNELS.AUTH_LOGIN, (_event, provider: string) => {
