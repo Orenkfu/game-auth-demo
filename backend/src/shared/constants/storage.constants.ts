@@ -6,6 +6,7 @@
 export const STORAGE_IDENTITIES = 'identities';
 export const STORAGE_OAUTH_ACCOUNTS = 'oauth_accounts';
 export const STORAGE_USER_PROFILES = 'user_profiles';
+export const STORAGE_VIDEOS = 'videos';
 
 // Session Storage
 export const SESSION_KEY_PREFIX = 'session:';

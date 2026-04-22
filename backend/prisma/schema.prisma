@@ -31,6 +31,7 @@ model Identity {
 
   oauthAccounts OAuthAccount[]
   profile       UserProfile?
+  videos        Video[]
 
   @@map("identities")
 }
@@ -71,4 +72,38 @@ model UserProfile {
   identity Identity @relation(fields: [identityId], references: [id])
 
   @@map("user_profiles")
+}
+
+enum VideoStatus {
+  pending
+  ready
+  failed
+}
+
+enum VideoVisibility {
+  private
+  unlisted
+  public
+}
+
+model Video {
+  id           String          @id @default(uuid())
+  identityId   String
+  title        String?
+  filename     String
+  storageKey   String
+  uploadId     String?
+  status       VideoStatus     @default(pending)
+  visibility   VideoVisibility @default(private)
+  sizeBytes    BigInt?
+  durationSecs Int?
+  width        Int?
+  height       Int?
+  mimeType     String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime
+
+  identity Identity @relation(fields: [identityId], references: [id])
+
+  @@map("videos")
 }
