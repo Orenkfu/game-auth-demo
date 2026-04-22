@@ -6,7 +6,11 @@
       "WebFetch(domain:dev.overwolf.com)",
       "WebSearch",
       "WebFetch(domain:support.overwolf.com)",
-      "WebFetch(domain:en.wikipedia.org)"
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)",
+      "Bash(grep -E \"\\\\.\\(css|scss|json\\)$\")"
     ]
   }
 }
