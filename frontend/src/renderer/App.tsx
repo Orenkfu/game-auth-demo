@@ -5,6 +5,8 @@ import { GAME_RULES } from '../event-generation/game-rules';
 import { TitleBar } from './components/TitleBar';
 import { PipeCard } from './components/PipeCard';
 import { QueryPanel } from './components/QueryPanel';
+import { VideoUploader } from './components/VideoUploader';
+import { VideoList } from './components/VideoList';
 import { useAuth } from './hooks/useAuth';
 
 const AVAILABLE_GAMES = Object.keys(GAME_RULES);
@@ -22,6 +24,7 @@ export default function App() {
   const { user, loading, error, login, logout } = useAuth();
   const [pipes, setPipes] = useState<PipeEntry[]>([]);
   const [selectedGame, setSelectedGame] = useState(AVAILABLE_GAMES[0]);
+  const [videoRefresh, setVideoRefresh] = useState(0);
 
   const handleLogout = async () => {
     pipes.forEach(p => p.pipe.close());
@@ -88,6 +91,11 @@ export default function App() {
         </div>
 
         <QueryPanel />
+
+        <div className="video-section">
+          <VideoUploader onUploaded={() => setVideoRefresh(n => n + 1)} />
+          <VideoList refreshTrigger={videoRefresh} />
+        </div>
 
         <button onClick={handleLogout} className="logout-btn">Log Out</button>
       </div>

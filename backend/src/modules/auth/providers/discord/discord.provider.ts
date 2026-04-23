@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   DiscordUser,
@@ -35,6 +35,7 @@ import {
 
 @Injectable()
 export class DiscordProvider {
+  private readonly logger = new Logger(DiscordProvider.name);
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly redirectUri: string;
@@ -85,10 +86,8 @@ export class DiscordProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_DISCORD_CODE_EXCHANGE}${error}`,
-      );
+      this.logger.warn(`${ERROR_DISCORD_CODE_EXCHANGE}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_DISCORD_CODE_EXCHANGE);
     }
 
     return response.json() as Promise<DiscordTokenResponse>;
@@ -109,10 +108,8 @@ export class DiscordProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_DISCORD_REFRESH_TOKENS}${error}`,
-      );
+      this.logger.warn(`${ERROR_DISCORD_REFRESH_TOKENS}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_DISCORD_REFRESH_TOKENS);
     }
 
     return response.json() as Promise<DiscordTokenResponse>;
@@ -126,10 +123,8 @@ export class DiscordProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_DISCORD_FETCH_USER}${error}`,
-      );
+      this.logger.warn(`${ERROR_DISCORD_FETCH_USER}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_DISCORD_FETCH_USER);
     }
 
     return response.json() as Promise<DiscordUser>;
@@ -157,10 +152,8 @@ export class DiscordProvider {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new UnauthorizedException(
-        `${ERROR_DISCORD_FETCH_RELATIONSHIPS}${error}`,
-      );
+      this.logger.warn(`${ERROR_DISCORD_FETCH_RELATIONSHIPS}${await response.text()}`);
+      throw new UnauthorizedException(ERROR_DISCORD_FETCH_RELATIONSHIPS);
     }
 
     return response.json() as Promise<DiscordRelationship[]>;

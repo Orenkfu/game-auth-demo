@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OAuthAccountRepository } from '../repositories/oauth-account.repository';
 import { OAuthAccount, OAuthProvider } from '../entities/oauth-account.entity';
+import { TokenEncryptionService } from '../../../shared/services/token-encryption.service';
 
 export interface CreateOAuthAccountDto {
   identityId: string;
@@ -17,7 +18,10 @@ export interface CreateOAuthAccountDto {
 
 @Injectable()
 export class OAuthAccountService {
-  constructor(private readonly oauthAccountRepository: OAuthAccountRepository) {}
+  constructor(
+    private readonly oauthAccountRepository: OAuthAccountRepository,
+    private readonly tokenEncryption: TokenEncryptionService,
+  ) {}
 
   async create(dto: CreateOAuthAccountDto): Promise<OAuthAccount> {
     const id = crypto.randomUUID();
@@ -30,8 +34,8 @@ export class OAuthAccountService {
       providerUserId: dto.providerUserId,
       providerUsername: dto.providerUsername,
       providerEmail: dto.providerEmail,
-      accessTokenEncrypted: dto.accessToken, // TODO: encrypt
-      refreshTokenEncrypted: dto.refreshToken, // TODO: encrypt
+      accessTokenEncrypted: this.tokenEncryption.encrypt(dto.accessToken),
+      refreshTokenEncrypted: dto.refreshToken ? this.tokenEncryption.encrypt(dto.refreshToken) : null,
       tokenExpiresAt: new Date(Date.now() + dto.expiresIn * 1000),
       scopes: dto.scopes,
       metadata: dto.metadata,
@@ -62,8 +66,8 @@ export class OAuthAccountService {
     const account = await this.oauthAccountRepository.findById(id);
     if (!account) return;
 
-    account.accessTokenEncrypted = accessToken; // TODO: encrypt
-    account.refreshTokenEncrypted = refreshToken; // TODO: encrypt
+    account.accessTokenEncrypted = this.tokenEncryption.encrypt(accessToken);
+    account.refreshTokenEncrypted = refreshToken ? this.tokenEncryption.encrypt(refreshToken) : null;
     account.tokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
     account.updatedAt = new Date();
 

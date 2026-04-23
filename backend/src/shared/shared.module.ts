@@ -5,6 +5,7 @@ import { InMemoryCache } from './services/in-memory-cache.service';
 import { RedisCache } from './services/redis-cache.service';
 import { PrismaService } from './services/prisma.service';
 import { SessionGuard } from './guards/session.guard';
+import { TokenEncryptionService } from './services/token-encryption.service';
 import { SESSION_STORE } from './interfaces/cache-store.interface';
 
 @Global()
@@ -30,7 +31,8 @@ import { SESSION_STORE } from './interfaces/cache-store.interface';
     RedisCache,
     PrismaService,
     SessionGuard,
+    TokenEncryptionService,
   ],
-  exports: [InMemoryStore, PrismaService, SESSION_STORE, SessionGuard],
+  exports: [InMemoryStore, PrismaService, SESSION_STORE, SessionGuard, TokenEncryptionService],
 })
 export class SharedModule {}
