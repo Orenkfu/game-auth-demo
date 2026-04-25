@@ -1,7 +1,7 @@
 locals {
   environment = "staging"
   project     = "outplayed"
-  aws_region  = "us-east-1"
+  aws_region  = "eu-west-1"
 }
 
 inputs = {

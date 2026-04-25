@@ -1,5 +1,5 @@
 include "root" { path = find_in_parent_folders() }
-include "env"  { path = find_in_parent_folders("terragrunt.hcl") }
+include "env"  { path = find_in_parent_folders("env.hcl") }
 
 terraform { source = "../../../modules/ecs" }
 
@@ -14,7 +14,7 @@ dependency "vpc" {
 dependency "alb" {
   config_path = "../alb"
   mock_outputs = {
-    target_group_arn      = "arn:aws:elasticloadbalancing:mock"
+    target_group_arn      = "arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/mock/0000000000000000"
     alb_security_group_id = "sg-mock"
   }
 }
@@ -22,8 +22,8 @@ dependency "alb" {
 dependency "iam" {
   config_path = "../iam"
   mock_outputs = {
-    ecs_task_execution_role_arn = "arn:aws:iam::mock:role/mock-execution"
-    ecs_task_role_arn           = "arn:aws:iam::mock:role/mock-task"
+    ecs_task_execution_role_arn = "arn:aws:iam::000000000000:role/mock-execution"
+    ecs_task_role_arn           = "arn:aws:iam::000000000000:role/mock-task"
   }
 }
 
@@ -32,8 +32,15 @@ dependency "ecr" {
   mock_outputs = { repository_url = "mock.dkr.ecr.us-east-1.amazonaws.com/outplayed-backend" }
 }
 
+dependency "secrets" {
+  config_path = "../secrets"
+  mock_outputs = {
+    secrets_arn_prefix = "arn:aws:secretsmanager:eu-west-1:000000000000:secret:outplayed/staging"
+  }
+}
+
 locals {
-  env = read_terragrunt_config(find_in_parent_folders("terragrunt.hcl"))
+  env = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
 inputs = {
@@ -45,7 +52,7 @@ inputs = {
   task_execution_role_arn = dependency.iam.outputs.ecs_task_execution_role_arn
   task_role_arn           = dependency.iam.outputs.ecs_task_role_arn
   ecr_repository_url      = dependency.ecr.outputs.repository_url
-  secrets_arn_prefix      = "arn:aws:secretsmanager:us-east-1:${get_aws_account_id()}:secret:outplayed/staging"
+  secrets_arn_prefix      = dependency.secrets.outputs.secrets_arn_prefix
 
   task_cpu     = 256
   task_memory  = 512
