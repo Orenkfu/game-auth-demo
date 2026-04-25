@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "main" {
-  name                 = "${var.project}-backend"
+  name                 = "${var.project}-${var.environment}-backend"
   image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
@@ -14,7 +14,7 @@ resource "aws_ecr_lifecycle_policy" "main" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 5 production images"
+        description  = "Keep last 5 tagged release images"
         selection = {
           tagStatus     = "tagged"
           tagPrefixList = ["v"]

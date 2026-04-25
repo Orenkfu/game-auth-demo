@@ -77,4 +77,28 @@ export class OAuthAccountService {
   async delete(identityId: string, provider: OAuthProvider): Promise<boolean> {
     return await this.oauthAccountRepository.deleteByIdentityAndProvider(identityId, provider);
   }
+
+  async getAccessToken(
+    identityId: string,
+    provider: OAuthProvider,
+  ): Promise<string | null> {
+    const account = await this.oauthAccountRepository.findByIdentityAndProvider(
+      identityId,
+      provider,
+    );
+    if (!account) return null;
+    return this.tokenEncryption.decrypt(account.accessTokenEncrypted);
+  }
+
+  async getRefreshToken(
+    identityId: string,
+    provider: OAuthProvider,
+  ): Promise<string | null> {
+    const account = await this.oauthAccountRepository.findByIdentityAndProvider(
+      identityId,
+      provider,
+    );
+    if (!account?.refreshTokenEncrypted) return null;
+    return this.tokenEncryption.decrypt(account.refreshTokenEncrypted);
+  }
 }

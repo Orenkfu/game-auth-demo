@@ -106,11 +106,10 @@ export class OAuthService {
 
     // Rule 3: Verified email matches existing identity → require link
     if (discordUser.email && discordUser.verified) {
-      const existingIdentity = await this.identityService.findByEmail(
-        discordUser.email,
-      );
+      const email = discordUser.email.toLowerCase();
+      const existingIdentity = await this.identityService.findByEmail(email);
       if (existingIdentity) {
-        throw new LinkRequiredException(PROVIDER_DISCORD, discordUser.email);
+        throw new LinkRequiredException(PROVIDER_DISCORD, email);
       }
     }
 

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PrismaIdentityRepository } from './prisma-identity.repository';
 import { PrismaService } from '../../../shared/services/prisma.service';
 import { Identity, IdentityStatus } from '../entities/identity.entity';
@@ -103,7 +104,16 @@ describe('PrismaIdentityRepository', () => {
   });
 
   it('returns false when delete fails (record not found)', async () => {
-    (mockPrisma.identity.delete as jest.Mock).mockRejectedValue(new Error('Not found'));
+    const err = new Prisma.PrismaClientKnownRequestError('Not found', {
+      code: 'P2025',
+      clientVersion: 'test',
+    });
+    (mockPrisma.identity.delete as jest.Mock).mockRejectedValue(err);
     expect(await repo.delete('missing')).toBe(false);
+  });
+
+  it('rethrows non-P2025 errors from delete', async () => {
+    (mockPrisma.identity.delete as jest.Mock).mockRejectedValue(new Error('boom'));
+    await expect(repo.delete('x')).rejects.toThrow('boom');
   });
 });

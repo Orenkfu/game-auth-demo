@@ -69,6 +69,16 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 *.swp
 *.swo
 
+# Claude Code (user-local settings should not be shared)
+.claude/settings.local.json
+
+# Terraform / Terragrunt local caches and state
+**/.terragrunt-cache/
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
 # OS
 .DS_Store
 Thumbs.db

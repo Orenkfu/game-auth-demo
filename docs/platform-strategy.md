@@ -41,40 +41,37 @@ As Outplayed matures into a standalone social platform, continued reliance on sh
 
 ## Auth Migration Strategy
 
+### Direction (confirmed 2026-04-23)
+
+Outplayed owns its auth layer end-to-end. Self-managed OAuth (Discord, Riot — extensible), server-side Redis sessions. No dependency on Overwolf platform identity. See [decisions.md D-001](decisions.md#d-001--auth-fully-self-managed-backend).
+
 ### The problem
-The Outplayed client currently owns **zero** auth logic. Login is handled entirely by the Overwolf client SDK — an OW-owned modal manages all HTTPS calls and token management. Overwolf's database has no concept of "Outplayed users" — all users are OW platform users.
 
-### Proposed approach: Shadow provisioning (2-month window)
+The Outplayed client currently owns **zero** auth logic. Login is handled entirely by the Overwolf client SDK — an OW-owned modal manages all HTTPS calls and token management. Overwolf's database has no concept of "Outplayed users" — users exist at the OW platform level.
 
-**Phase 1 — Shadow writes (months 1–2)**
-- Client sends an event to the Outplayed backend on OW auth events (login, logout, token refresh)
-- Backend silently creates/updates Outplayed user records from the received user data
-- No user-facing change; users continue to authenticate via OW as normal
-- By end of phase, the Outplayed user table is populated for all active users
+### Migration Blockers (hunt before 2026-04-29 handoff)
 
-**Phase 2 — Auth switch**
-- Outplayed client switches to native auth (Outplayed-owned flow)
-- Users already in the system get a seamless transition
-- Inactive users (no login in 2 months) onboard fresh — acceptable churn
+Three unknowns gate any concrete migration plan. These are listed in [decisions.md](decisions.md#migration-blockers-informational-not-decisions):
 
-### Open questions (block Phase 5 in roadmap)
+1. **Outplayed users are indistinguishable in OW's user table.** Cannot do a filtered export. Confirmed from previous scoping work — OW cannot tell us "these N users are your users."
+2. **The Outplayed client uses the Overwolf SDK for auth.** Decoupling requires a client-side SDK change that is not yet within our control.
+3. **Clip storage at `uploads.outplayed.tv/media` is opaque.** Bucket ownership and the user→clip mapping are not visible to us. No user ID in the storage path.
 
-**OQ-1: Token verification**
-The backend cannot trust client-sent user data without independent verification. Two options:
-- Client sends the OW session token → backend validates against OW's user API. **Does OW expose a token introspection endpoint to app developers?**
-- OW registered as an OAuth2 provider. **Does OW platform expose an OAuth2 flow for app developers?**
+### Superseded: shadow provisioning via OW auth events
 
-**OQ-2: Email availability**
-The current identity model uses email as the primary identifier. **Does the OW SDK expose the user's email on auth events?** If not, the identity model needs to accommodate an OW-userId-only primary key during the shadow period.
+An earlier draft proposed a 2-month shadow-write window where the client would emit OW auth events to the Outplayed backend, silently populating our user table. That plan is superseded ([D-018](decisions.md#d-018--shadow-provisioning-via-ow-auth-events-superseded)) because:
 
-**OQ-3: Already-logged-in users**
-Users already logged in when shadow provisioning ships won't trigger a login event. Options: trigger on next app launch, or on any API call.
+- The client-side event emission depends on SDK hooks we have not verified exist.
+- Token verification against OW requires an introspection endpoint that has not been confirmed exposed to app developers.
+- Even with perfect event capture, OW cannot distinguish "Outplayed users" from general-platform users — so we would shadow-provision every OW user, not our cohort.
 
-**OQ-4: OW user data payload**
-What fields does the OW SDK expose on auth events? Minimum: a stable unique user ID. Nice to have: username, display name, avatar URL, email.
+The migration plan will be redesigned post-handoff once we have real access to confirm or rule out these assumptions.
 
-**OQ-5: Session strategy during shadow period**
-Should the backend issue Outplayed session tokens during Phase 1 (alongside OW tokens), or only at the Phase 2 switch? Issuing early makes the cutover invisible to users.
+### Interim (pre-handoff) work
+
+- Backend runs fully self-managed auth for new users (Discord + Riot working; credential-pending Riot).
+- Client decoupling is scoped, not scheduled — depends on what the handoff surfaces.
+- Migration of existing users is explicitly out of scope until the three blockers above are resolved.
 
 ---
 
@@ -86,4 +83,4 @@ Adding a social graph after the fact to a relational schema is painful. Minimum 
 - Activity feed: fan-out on write vs. fan-out on read
 - Notification infrastructure
 
-**OQ-6:** Twitter-style (follow anyone, asymmetric) or Facebook-style (mutual friendship required)?
+Open question: Twitter-style (follow anyone, asymmetric) or Facebook-style (mutual friendship required)? See OQ-6 in [production-roadmap.md](production-roadmap.md#open-questions).

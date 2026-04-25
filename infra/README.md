@@ -4,69 +4,56 @@ Terraform + Terragrunt. Two environments: `staging`, `production`.
 
 ## Prerequisites
 
-- Terraform >= 1.6
-- Terragrunt >= 0.55
-- AWS CLI configured with appropriate credentials
-- AWS account ID handy
+- Terraform >= 1.6 (tested with 6.x AWS provider)
+- Terragrunt >= 0.55 (uses the `run --all` CLI; the old `run-all` is removed)
+- AWS CLI configured with credentials
+- A Datadog account and API + APP keys
 
-## Bootstrap (first time only)
+## One-time setup
 
-State is stored in S3. Create the state bucket and DynamoDB lock table before running
-any Terragrunt commands:
-
-```bash
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export AWS_REGION=us-east-1
-export PROJECT=outplayed
-
-# State bucket
-aws s3api create-bucket \
-  --bucket ${PROJECT}-terraform-state-${AWS_ACCOUNT_ID} \
-  --region ${AWS_REGION}
-
-aws s3api put-bucket-versioning \
-  --bucket ${PROJECT}-terraform-state-${AWS_ACCOUNT_ID} \
-  --versioning-configuration Status=Enabled
-
-aws s3api put-bucket-encryption \
-  --bucket ${PROJECT}-terraform-state-${AWS_ACCOUNT_ID} \
-  --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
-
-# DynamoDB lock table
-aws dynamodb create-table \
-  --table-name ${PROJECT}-terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region ${AWS_REGION}
-```
-
-Then update the `certificate_arn` placeholders in:
-- `environments/staging/alb/terragrunt.hcl`
-- `environments/production/alb/terragrunt.hcl`
-
-## Deployment order
-
-Modules have dependencies — deploy in this order the first time:
+**1. Bootstrap the state backend.** S3 state bucket + DynamoDB lock table live in `us-east-1`:
 
 ```bash
-cd environments/staging   # or production
-
-terragrunt run-all apply --terragrunt-modules-that-include vpc
-terragrunt apply --terragrunt-working-dir iam
-terragrunt apply --terragrunt-working-dir ecr
-terragrunt apply --terragrunt-working-dir alb
-terragrunt apply --terragrunt-working-dir s3
-terragrunt apply --terragrunt-working-dir rds    # requires TF_VAR_db_password
-terragrunt apply --terragrunt-working-dir redis
-terragrunt apply --terragrunt-working-dir ecs
+./bootstrap.sh
 ```
 
-For subsequent changes, Terragrunt handles dependency resolution automatically:
+**2. Create `infra/.env`** (gitignored) with secrets read by Terragrunt at apply time:
 
 ```bash
-terragrunt run-all apply
+DD_API_KEY=...        # from https://app.datadoghq.com/organization-settings/api-keys
+DD_APP_KEY=...        # from https://app.datadoghq.com/organization-settings/application-keys
+TF_VAR_db_password=... # RDS master password (any strong value)
 ```
+
+Load it in your shell before running terragrunt:
+
+```bash
+export $(grep -v '^#' infra/.env | xargs)
+```
+
+## Deploy
+
+Terragrunt resolves dependencies automatically — one command per environment:
+
+```bash
+cd infra/environments/staging   # or production
+terragrunt run --all plan       # review
+terragrunt run --all apply
+```
+
+The `secrets` unit creates AWS Secrets Manager entries with placeholder values so ECS
+can start. Replace each placeholder with a real value out-of-band — Terraform won't
+overwrite them on subsequent applies (`ignore_changes = [secret_string]`):
+
+```bash
+aws secretsmanager put-secret-value \
+  --secret-id outplayed/staging/database-url \
+  --secret-string "postgresql://..."
+```
+
+Required secrets (see `modules/secrets/main.tf`): `database-url`, `redis-url`,
+`discord-client-id`, `discord-client-secret`, `riot-client-id`, `riot-client-secret`,
+`oauth-token-encryption-key`.
 
 ## Environment differences
 
@@ -81,22 +68,20 @@ terragrunt run-all apply
 | Redis         | cache.t4g.micro      | cache.t4g.medium      |
 | Deletion protection | No             | Yes                   |
 
-## Secrets
+## Secrets at runtime
 
-All application secrets live in AWS Secrets Manager under:
-- `outplayed/staging/*`
-- `outplayed/production/*`
+ECS tasks pull secrets at startup via the `secrets` block in the task definition; the
+`task_execution_role` has `secretsmanager:GetSecretValue` scoped to
+`outplayed/${environment}/*`. Never put secrets in environment variables or Terraform
+state.
 
-ECS tasks pull secrets at startup via the `secrets` block in the task definition.
-Never put secrets in environment variables or Terraform state.
+AWS permissions (S3, CloudFront) are handled via the ECS task IAM role — no static
+credentials needed.
 
-Required secrets per environment:
-- `database-url`
-- `redis-url`
-- `discord-client-id`
-- `discord-client-secret`
-- `riot-client-id`
-- `riot-client-secret`
-- `oauth-token-encryption-key`
+## Known tech debt
 
-AWS permissions (S3, CloudFront) are handled via the ECS task IAM role — no static credentials needed.
+See [docs/open-questions.md](../docs/open-questions.md) — currently:
+- ALB runs HTTP-only (no ACM cert wired up); HTTPS listener is gated behind
+  `var.certificate_arn`.
+- CloudFront is disabled in staging (`enable_cloudfront = false`) pending account
+  verification on the personal AWS account used for early testing.

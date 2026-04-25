@@ -29,7 +29,6 @@ export const ERROR_MISSING_PKCE_VERIFIER = 'Missing PKCE code verifier in state'
 
 // Not Found Error Messages
 export const ERROR_IDENTITY_NOT_FOUND = 'Identity not found';
-export const ERROR_USER_NOT_FOUND = 'User not found';
 export const ERROR_USER_PROFILE_NOT_FOUND = 'User profile not found';
 
 // Link Required Exception

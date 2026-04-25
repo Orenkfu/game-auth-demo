@@ -13,10 +13,7 @@ export const OAUTH_RIOT_LINK_ROUTE = 'riot/link';
 export const OAUTH_SESSION_ROUTE = 'session';
 export const OAUTH_LOGOUT_ROUTE = 'logout';
 
-// Users Controller Routes
-export const USERS_CONTROLLER_ROUTE = 'users';
-export const USERS_ME_ROUTE = 'me';
-
-// Request Parameter Keys
-export const CURRENT_USER_ID_PARAM = 'current-user-id';
-export const CURRENT_IDENTITY_ID_PARAM = 'current-identity-id';
+// Health Controller Routes
+export const HEALTH_CONTROLLER_ROUTE = 'health';
+export const HEALTH_LIVENESS_ROUTE = 'live';
+export const HEALTH_READINESS_ROUTE = 'ready';

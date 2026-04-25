@@ -3,6 +3,7 @@ import { OAuthAccountService } from './oauth-account.service';
 import { OAuthAccountRepository } from '../repositories/oauth-account.repository';
 import { OAuthProvider } from '../entities/oauth-account.entity';
 import { InMemoryStore } from '../../../shared/services/in-memory-store.service';
+import { TokenEncryptionService } from '../../../shared/services/token-encryption.service';
 
 describe('OAuthAccountService', () => {
   let service: OAuthAccountService;
@@ -17,6 +18,13 @@ describe('OAuthAccountService', () => {
         {
           provide: InMemoryStore,
           useValue: store,
+        },
+        {
+          provide: TokenEncryptionService,
+          useValue: {
+            encrypt: (plaintext: string) => `enc:${plaintext}`,
+            decrypt: (stored: string) => stored.replace(/^enc:/, ''),
+          },
         },
       ],
     }).compile();
@@ -158,8 +166,8 @@ describe('OAuthAccountService', () => {
         'discord-123',
       );
 
-      expect(updated!.accessTokenEncrypted).toBe('new-token');
-      expect(updated!.refreshTokenEncrypted).toBe('new-refresh');
+      expect(updated!.accessTokenEncrypted).toBe('enc:new-token');
+      expect(updated!.refreshTokenEncrypted).toBe('enc:new-refresh');
     });
   });
 });

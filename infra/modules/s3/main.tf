@@ -40,9 +40,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "videos" {
   }
 }
 
-# ── CloudFront Origin Access Control ─────────────────────────────────────────
+# ── CloudFront (skipped when enable_cloudfront = false) ───────────────────────
 
 resource "aws_cloudfront_origin_access_control" "videos" {
+  count = var.enable_cloudfront ? 1 : 0
+
   name                              = "${var.project}-${var.environment}-videos-oac"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -50,6 +52,8 @@ resource "aws_cloudfront_origin_access_control" "videos" {
 }
 
 resource "aws_cloudfront_distribution" "videos" {
+  count = var.enable_cloudfront ? 1 : 0
+
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${var.project}-${var.environment} video delivery"
@@ -57,7 +61,7 @@ resource "aws_cloudfront_distribution" "videos" {
   origin {
     domain_name              = aws_s3_bucket.videos.bucket_regional_domain_name
     origin_id                = "s3-videos"
-    origin_access_control_id = aws_cloudfront_origin_access_control.videos.id
+    origin_access_control_id = aws_cloudfront_origin_access_control.videos[0].id
   }
 
   default_cache_behavior {
@@ -87,6 +91,8 @@ resource "aws_cloudfront_distribution" "videos" {
 }
 
 resource "aws_s3_bucket_policy" "videos_cloudfront" {
+  count = var.enable_cloudfront ? 1 : 0
+
   bucket = aws_s3_bucket.videos.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -98,7 +104,7 @@ resource "aws_s3_bucket_policy" "videos_cloudfront" {
       Resource  = "${aws_s3_bucket.videos.arn}/*"
       Condition = {
         StringEquals = {
-          "AWS:SourceArn" = aws_cloudfront_distribution.videos.arn
+          "AWS:SourceArn" = aws_cloudfront_distribution.videos[0].arn
         }
       }
     }]

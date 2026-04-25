@@ -1,6 +1,6 @@
 resource "aws_security_group" "alb" {
   name        = "${var.project}-${var.environment}-alb-sg"
-  description = "ALB — allow HTTP/HTTPS from Cloudflare"
+  description = "ALB - allow HTTP/HTTPS from Cloudflare"
   vpc_id      = var.vpc_id
 
   # Cloudflare IP ranges should be restricted here in production
@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "main" {
   target_type = "ip"
 
   health_check {
-    path                = "/api/health"
+    path                = "/api/health/live"
     healthy_threshold   = 2
     unhealthy_threshold = 3
     interval            = 30
@@ -65,16 +65,31 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
+    type = var.certificate_arn != null ? "redirect" : "forward"
+
+    dynamic "redirect" {
+      for_each = var.certificate_arn != null ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+
+    dynamic "forward" {
+      for_each = var.certificate_arn == null ? [1] : []
+      content {
+        target_group {
+          arn = aws_lb_target_group.main.arn
+        }
+      }
     }
   }
 }
 
 resource "aws_lb_listener" "https" {
+  count = var.certificate_arn != null ? 1 : 0
+
   load_balancer_arn = aws_lb.main.arn
   port              = 443
   protocol          = "HTTPS"

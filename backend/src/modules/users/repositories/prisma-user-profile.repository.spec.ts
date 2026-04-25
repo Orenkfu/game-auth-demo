@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PrismaUserProfileRepository } from './prisma-user-profile.repository';
 import { PrismaService } from '../../../shared/services/prisma.service';
 import { UserProfile } from '../entities/user-profile.entity';
@@ -102,8 +103,17 @@ describe('PrismaUserProfileRepository', () => {
     expect(await repo.delete('profile-1')).toBe(true);
   });
 
-  it('returns false when delete fails', async () => {
-    (mockPrisma.userProfile.delete as jest.Mock).mockRejectedValue(new Error('Not found'));
+  it('returns false when delete fails (record not found)', async () => {
+    const err = new Prisma.PrismaClientKnownRequestError('Not found', {
+      code: 'P2025',
+      clientVersion: 'test',
+    });
+    (mockPrisma.userProfile.delete as jest.Mock).mockRejectedValue(err);
     expect(await repo.delete('missing')).toBe(false);
+  });
+
+  it('rethrows non-P2025 errors from delete', async () => {
+    (mockPrisma.userProfile.delete as jest.Mock).mockRejectedValue(new Error('boom'));
+    await expect(repo.delete('x')).rejects.toThrow('boom');
   });
 });

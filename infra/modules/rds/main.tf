@@ -1,6 +1,6 @@
 resource "aws_security_group" "rds" {
   name        = "${var.project}-${var.environment}-rds-sg"
-  description = "RDS — ingress from ECS only"
+  description = "RDS - ingress from ECS only"
   vpc_id      = var.vpc_id
 
   ingress {

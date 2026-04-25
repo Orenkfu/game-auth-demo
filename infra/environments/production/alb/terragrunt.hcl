@@ -1,5 +1,5 @@
 include "root" { path = find_in_parent_folders() }
-include "env"  { path = find_in_parent_folders("terragrunt.hcl") }
+include "env"  { path = find_in_parent_folders("env.hcl") }
 
 terraform { source = "../../../modules/alb" }
 
@@ -14,5 +14,5 @@ dependency "vpc" {
 inputs = {
   vpc_id            = dependency.vpc.outputs.vpc_id
   public_subnet_ids = dependency.vpc.outputs.public_subnet_ids
-  certificate_arn   = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/PRODUCTION_CERT_ID"
+  # certificate_arn = "..."  # omitted — HTTP only until a domain is registered
 }

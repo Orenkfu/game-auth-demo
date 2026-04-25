@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../shared/services/prisma.service';
 import { Identity } from '../entities/identity.entity';
+
+const PRISMA_RECORD_NOT_FOUND = 'P2025';
 
 @Injectable()
 export class PrismaIdentityRepository {
@@ -68,8 +71,14 @@ export class PrismaIdentityRepository {
     try {
       await this.prisma.identity.delete({ where: { id } });
       return true;
-    } catch {
-      return false;
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === PRISMA_RECORD_NOT_FOUND
+      ) {
+        return false;
+      }
+      throw err;
     }
   }
 }

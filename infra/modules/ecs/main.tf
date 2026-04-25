@@ -1,6 +1,6 @@
 resource "aws_security_group" "ecs" {
   name        = "${var.project}-${var.environment}-ecs-sg"
-  description = "ECS tasks — ingress from ALB only"
+  description = "ECS tasks - ingress from ALB only"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -82,14 +82,6 @@ resource "aws_ecs_task_definition" "main" {
         awslogs-region        = var.aws_region
         awslogs-stream-prefix = "backend"
       }
-    }
-
-    healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/api/health || exit 1"]
-      interval    = 30
-      timeout     = 5
-      retries     = 3
-      startPeriod = 60
     }
   }])
 }

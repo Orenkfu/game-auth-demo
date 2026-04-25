@@ -1,142 +1,63 @@
-# Outplayed Auth Demo
+# Outplayed Backend
 
-A gaming authentication system demonstrating OAuth integration with Discord and Riot Games, session management, Postgres persistence, and clean architecture patterns — runnable in full via Docker Compose.
+Outplayed's dedicated backend. Self-managed authentication, user profiles, video upload, and (scaffolded) event pipeline — decoupled from Overwolf shared platform infrastructure.
 
-## Project Structure
+- **Architecture** — [docs/architecture.md](docs/architecture.md)
+- **Decision register (ADRs)** — [docs/decisions.md](docs/decisions.md)
+- **Platform strategy & auth migration** — [docs/platform-strategy.md](docs/platform-strategy.md)
+- **Production roadmap** — [docs/production-roadmap.md](docs/production-roadmap.md)
+- **Business case & costs** — [docs/business-case.md](docs/business-case.md)
+- **Feature specs** — [docs/features.md](docs/features.md)
+- **Open questions & deferred decisions** — [docs/open-questions.md](docs/open-questions.md)
+- **Operations runbooks** — [docs/operations.md](docs/operations.md)
 
-```
-game-auth/
-├── backend/          # NestJS API (TypeScript)
-├── frontend/         # Electron + React desktop app
-├── docker-compose.yml
-└── ARCHITECTURE.md   # Design decisions & implementation details
-```
+## Quick start
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend | NestJS 11, TypeScript |
-| Database | PostgreSQL 16 + Prisma 6 ORM |
-| Cache / Sessions | Redis (ioredis) |
-| Frontend | Electron 41, React 19, TypeScript |
-| Auth | OAuth 2.0 — Discord (working), Riot Games (code ready, needs RSO credentials) |
-| Infrastructure | Docker Compose |
-
-## Quick Start
-
-### Option A — Docker Compose (recommended)
-
-Runs backend + Redis + Postgres together:
+### Docker Compose (full stack)
 
 ```bash
-docker compose up --build
+docker compose up --build          # backend, redis, postgres, minio, ingestor, consumer
+cd frontend && npm install && npm start
 ```
 
 | Service | URL |
 |---------|-----|
 | Backend API | http://localhost:3001 |
+| Frontend (Electron) | http://localhost:3000 |
 | Redis | localhost:6379 |
 | Postgres | localhost:5432 |
 
-Then start the Electron frontend separately:
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
-### Option B — Local backend (no Postgres)
-
-Runs with in-memory storage (no Docker required):
+### Backend only (no Docker)
 
 ```bash
 cd backend
-npm install
-# Leave USE_POSTGRES=false and USE_REDIS=false in .env
-npm run start:dev
+# .env: USE_POSTGRES=false, USE_REDIS=false
+npm install && npm run start:dev
 ```
 
-```bash
-cd frontend
-npm install
-npm start
-```
+## Environment
 
-### Environment Variables
-
-`backend/.env`:
-
-```env
-# Discord OAuth (required)
-DISCORD_CLIENT_ID=your_client_id
-DISCORD_CLIENT_SECRET=your_client_secret
-DISCORD_REDIRECT_URI=http://localhost:3001/oauth/discord/callback
-
-# Riot OAuth (optional — requires RSO approval)
-RIOT_CLIENT_ID=your_riot_client_id
-RIOT_CLIENT_SECRET=your_riot_client_secret
-RIOT_REDIRECT_URI=http://localhost:3001/oauth/riot/callback
-
-# Redis (USE_REDIS=false falls back to in-memory)
-USE_REDIS=true
-REDIS_URL=redis://localhost:6379
-
-# Postgres (USE_POSTGRES=false falls back to in-memory)
-USE_POSTGRES=false
-DATABASE_URL=postgresql://gameauth:gameauth@localhost:5432/gameauth
-
-# Session
-SESSION_TTL_SECONDS=86400
-```
-
-## Features
-
-- **OAuth Authentication** — Discord login with email/identify scopes
-- **Identity/Profile Separation** — Auth concerns isolated from user data
-- **3 Auth Rules** — Returning user, new user, and email collision (requires explicit link)
-- **Session Management** — Redis-backed sliding window sessions with `SessionGuard`
-- **Postgres Persistence** — Prisma ORM, switchable per environment
-- **In-memory Fallback** — Full local dev without Docker
-- **Global Validation** — `ValidationPipe` with whitelist on all endpoints
-- **HTTP Logging** — Request/response logging middleware
-- **Desktop OAuth Flow** — Electron popup window with IPC result handling
-- **E2E Test Suite** — 7 tests covering all auth rules + Redis session storage
-
-## Database
-
-```bash
-cd backend
-
-# Run migrations (creates tables)
-npm run db:migrate
-
-# Open Prisma Studio (UI to browse data)
-npm run db:studio
-```
+Copy `backend/.env.example` → `backend/.env`. OAuth credentials (Discord required; Riot optional, pending RSO) and AWS/MinIO settings for video upload. See [backend/README.md](backend/README.md).
 
 ## Testing
 
 ```bash
 cd backend
-
-# Unit tests with coverage
-npm test
-
-# E2E tests (requires Redis)
-npm run test:e2e
-
-# E2E with Docker Redis auto-started
-npm run test:e2e:docker
+npm test                    # unit tests + coverage
+npm run test:e2e:docker     # e2e (auto-starts Docker Redis)
 ```
 
-## Documentation
+## Repository layout
 
-- [Architecture & Design Decisions](./ARCHITECTURE.md)
-- [Backend README](./backend/README.md)
-- [Frontend README](./frontend/README.md)
+| Path | What |
+|------|------|
+| [backend/](backend/) | NestJS 11 API (port 3001) — OAuth, sessions, profiles, video upload |
+| [frontend/](frontend/) | Electron + React desktop client (port 3000) |
+| [ingestor/](ingestor/) | Go HTTP → Redis event producer (port 3002) — scaffolding for the future Kafka pipeline |
+| [consumer/](consumer/) | Go Redis → DuckDB consumer (port 3003) — scaffolding for the future Snowflake pipeline |
+| [infra/](infra/) | Terraform + Terragrunt AWS infra |
+| [docs/](docs/) | Architecture, decisions, roadmap |
 
 ## License
 
-UNLICENSED - Private project
+UNLICENSED — private project.

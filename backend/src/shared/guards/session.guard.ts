@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
 import type { CacheStore } from '../interfaces/cache-store.interface';
 import { SESSION_STORE } from '../interfaces/cache-store.interface';
@@ -13,6 +14,7 @@ import {
   SESSION_KEY_PREFIX,
   SESSION_TTL_DEFAULT,
 } from '../constants/storage.constants';
+import { CONFIG_SESSION_TTL } from '../constants/config.constants';
 import {
   ERROR_MISSING_SESSION_TOKEN,
   ERROR_INVALID_SESSION,
@@ -20,7 +22,14 @@ import {
 
 @Injectable()
 export class SessionGuard implements CanActivate {
-  constructor(@Inject(SESSION_STORE) private readonly store: CacheStore) {}
+  private readonly ttlSeconds: number;
+
+  constructor(
+    @Inject(SESSION_STORE) private readonly store: CacheStore,
+    config: ConfigService,
+  ) {
+    this.ttlSeconds = config.get<number>(CONFIG_SESSION_TTL, SESSION_TTL_DEFAULT);
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -42,7 +51,7 @@ export class SessionGuard implements CanActivate {
     await this.store.set(
       SESSION_KEY_PREFIX + token,
       JSON.stringify(session),
-      SESSION_TTL_DEFAULT,
+      this.ttlSeconds,
     );
 
     (req as Request & { session: Session }).session = session;

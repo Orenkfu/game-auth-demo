@@ -1,7 +1,9 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SessionGuard } from './session.guard';
 import type { CacheStore } from '../interfaces/cache-store.interface';
 import type { Session } from '../../modules/auth/services/session.service';
+import { SESSION_TTL_DEFAULT } from '../constants/storage.constants';
 
 const mockStore: jest.Mocked<CacheStore> = {
   get: jest.fn(),
@@ -13,6 +15,14 @@ const mockStore: jest.Mocked<CacheStore> = {
   exists: jest.fn(),
   delByPattern: jest.fn(),
 };
+
+function makeConfig(ttlSeconds?: number): ConfigService {
+  return {
+    get: jest.fn((_key: string, defaultValue?: unknown) =>
+      ttlSeconds ?? defaultValue,
+    ),
+  } as unknown as ConfigService;
+}
 
 function makeSession(overrides: Partial<Session> = {}): Session {
   return {
@@ -38,7 +48,7 @@ describe('SessionGuard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    guard = new SessionGuard(mockStore);
+    guard = new SessionGuard(mockStore, makeConfig());
   });
 
   it('throws UnauthorizedException when Authorization header is missing', async () => {
@@ -99,5 +109,34 @@ describe('SessionGuard', () => {
 
     const stored = JSON.parse(mockStore.set.mock.calls[0][1] as string);
     expect(stored.lastActivityAt).toBeGreaterThan(1000);
+  });
+
+  it('uses the configured SESSION_TTL_SECONDS when refreshing, not the default', async () => {
+    const customTtl = 3600;
+    const customGuard = new SessionGuard(mockStore, makeConfig(customTtl));
+    mockStore.get.mockResolvedValue(JSON.stringify(makeSession()));
+    mockStore.set.mockResolvedValue(undefined);
+
+    await customGuard.canActivate(makeContext('Bearer valid-token'));
+
+    expect(mockStore.set).toHaveBeenCalledWith(
+      'session:valid-token',
+      expect.any(String),
+      customTtl,
+    );
+    expect(mockStore.set.mock.calls[0][2]).not.toBe(SESSION_TTL_DEFAULT);
+  });
+
+  it('falls back to SESSION_TTL_DEFAULT when SESSION_TTL_SECONDS is unset', async () => {
+    mockStore.get.mockResolvedValue(JSON.stringify(makeSession()));
+    mockStore.set.mockResolvedValue(undefined);
+
+    await guard.canActivate(makeContext('Bearer valid-token'));
+
+    expect(mockStore.set).toHaveBeenCalledWith(
+      'session:valid-token',
+      expect.any(String),
+      SESSION_TTL_DEFAULT,
+    );
   });
 });
